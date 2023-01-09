@@ -1,19 +1,19 @@
 import {
-    Button,
-    Text,
-    HStack,
-    Image,
-    Box,
-    VStack,
-    Container,
-    Heading,
+  Button,
+  Text,
+  HStack,
+  Image,
+  Box,
+  VStack,
+  Container,
+  Heading,
 } from "@chakra-ui/react";
 import {
-    MouseEventHandler,
-    useCallback,
-    useEffect,
-    useMemo,
-    useState,
+  MouseEventHandler,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
 } from "react";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import type { NextPage } from "next";
@@ -21,93 +21,90 @@ import MainLayout from "../components/MainLayout";
 import { PublicKey } from "@solana/web3.js";
 import { Metaplex, walletAdapterIdentity } from "@metaplex-foundation/js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useRouter } from "next/router";
 
 interface NewMintProps {
-    mint: PublicKey;
+  mint: PublicKey;
 }
 
 const NewMint: NextPage<NewMintProps> = ({ mint }) => {
-    const [metadata, setMetadata] = useState<any>();
-    const { connection } = useConnection();
-    const walletAdapter = useWallet();
-    const metaplex = useMemo(() => {
-        return Metaplex.make(connection).use(
-            walletAdapterIdentity(walletAdapter)
-        );
-    }, [connection, walletAdapter]);
+  const [metadata, setMetadata] = useState<any>();
+  const { connection } = useConnection();
+  const walletAdapter = useWallet();
+  const metaplex = useMemo(() => {
+    return Metaplex.make(connection).use(walletAdapterIdentity(walletAdapter));
+  }, [connection, walletAdapter]);
 
-    useEffect(() => {
-        // What this does is to allow us to find the NFT object
-        // based on the given mint address
-        metaplex
-            .nfts()
-            .findByMint({ mintAddress: mint })
-            .then((nft) => {
-                // We then fetch the NFT uri to fetch the NFT metadata
-                fetch(nft.uri)
-                    .then((res) => res.json())
-                    .then((metadata) => {
-                        setMetadata(metadata);
-                    });
-            });
-    }, [mint, metaplex, walletAdapter]);
+  useEffect(() => {
+    // What this does is to allow us to find the NFT object
+    // based on the given mint address
+    metaplex
+      .nfts()
+      .findByMint({ mintAddress: mint })
+      .then((nft) => {
+        // We then fetch the NFT uri to fetch the NFT metadata
+        fetch(nft.uri)
+          .then((res) => res.json())
+          .then((metadata) => {
+            setMetadata(metadata);
+          });
+      });
+  }, [mint, metaplex, walletAdapter]);
 
-    const handleClick: MouseEventHandler<HTMLButtonElement> = useCallback(
-        async (event) => {},
-        []
-    );
+  const router = useRouter();
 
-    return (
-        <MainLayout>
-            <VStack spacing={20}>
-                <Container>
-                    <VStack spacing={8}>
-                        <Heading
-                            color="white"
-                            as="h1"
-                            size="2xl"
-                            textAlign="center"
-                        >
-                            😮 A new buildoor has appeared!
-                        </Heading>
+  const handleClick: MouseEventHandler<HTMLButtonElement> = useCallback(
+    async (event) => {
+      router.push(`/stake?mint=${mint}&imageSrc=${metadata?.image}`);
+    },
+    [router, mint, metadata]
+  );
 
-                        <Text color="bodyText" fontSize="xl" textAlign="center">
-                            Congratulations, you minted a lvl 1 buildoor! <br />
-                            Time to stake your character to earn rewards and
-                            level up.
-                        </Text>
-                    </VStack>
-                </Container>
+  return (
+    <MainLayout>
+      <VStack spacing={20}>
+        <Container>
+          <VStack spacing={8}>
+            <Heading color="white" as="h1" size="2xl" textAlign="center">
+              😮 A new buildoor has appeared!
+            </Heading>
 
-                <Image src={metadata?.image ?? ""} alt="" boxSize={200} />
+            <Text color="bodyText" fontSize="xl" textAlign="center">
+              Congratulations, you minted a lvl 1 buildoor! <br />
+              Time to stake your character to earn rewards and level up.
+            </Text>
+          </VStack>
+        </Container>
 
-                <Button
-                    bgColor="accent"
-                    color="white"
-                    maxW="380px"
-                    onClick={handleClick}
-                >
-                    <HStack>
-                        <Text>stake my buildoor</Text>
-                        <ArrowForwardIcon />
-                    </HStack>
-                </Button>
-            </VStack>
-        </MainLayout>
-    );
+        <Image src={metadata?.image ?? ""} alt="" boxSize={200} />
+
+        <Button
+          bgColor="accent"
+          color="white"
+          maxW="380px"
+          onClick={handleClick}
+        >
+          <HStack>
+            <Text>stake my buildoor</Text>
+            <ArrowForwardIcon />
+          </HStack>
+        </Button>
+      </VStack>
+    </MainLayout>
+  );
 };
 
 NewMint.getInitialProps = async ({ query }) => {
-    const { mint } = query;
+  const { mint } = query;
 
-    if (!mint) throw { error: "no mint" };
+  if (!mint) throw { error: "no mint" };
 
-    try {
-        const mintPubkey = new PublicKey(mint);
-        return { mint: mintPubkey };
-    } catch {
-        throw { error: "invalid mint" };
-    }
+  try {
+    const mintPubkey = new PublicKey(mint);
+    return { mint: mintPubkey };
+  } catch {
+    throw { error: "invalid mint" };
+  }
 };
 
 export default NewMint;
